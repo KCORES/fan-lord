@@ -1,0 +1,16 @@
+# Build directories
+build/
+dist/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Environment directories
+venv/
+env/
+.env
+
+# IDE settings
+.vscode/
+.idea/
