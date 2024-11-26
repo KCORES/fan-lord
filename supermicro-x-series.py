@@ -27,6 +27,48 @@ def run_as_admin():
         sys.exit(1)
 
 
+class CustomScale(tk.Frame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master)
+        self.canvas = tk.Canvas(self, height=20, highlightthickness=0)
+        self.canvas.pack(fill="x", pady=(0, 5))
+        self.scale = tk.Scale(self, **kwargs)
+        self.scale.pack(fill="x")
+
+        self.update_background()
+        self.scale.configure(command=self.update_background)
+
+    def update_background(self, *args):
+        self.canvas.delete("all")
+        width = self.canvas.winfo_width()
+        if width == 0:  # 窗口初始化时可能为0
+            self.canvas.after(10, self.update_background)
+            return
+
+        value = self.scale.get()
+        threshold = 30
+        threshold_x = width * (threshold / 100)
+        current_x = width * (value / 100)
+
+        # 绘制灰色部分（0-30）
+        if threshold_x > 0:
+            self.canvas.create_rectangle(
+                0, 0, min(threshold_x, current_x), 5, fill="#D3D3D3", outline=""
+            )
+
+        # 绘制绿色部分（30-100）
+        if current_x > threshold_x:
+            self.canvas.create_rectangle(
+                threshold_x, 0, current_x, 5, fill="#90EE90", outline=""
+            )
+
+    def bind(self, sequence=None, func=None, add=None):
+        self.scale.bind(sequence, func, add)
+
+    def get(self):
+        return self.scale.get()
+
+
 class IPMIGui:
     def __init__(self, root):
         self.root = root
@@ -94,25 +136,41 @@ class IPMIGui:
 
         # CPU风扇控制
         tk.Label(manual_frame, text="CPU风扇转速").pack()
-        self.cpu_scale = tk.Scale(
+        self.cpu_scale = CustomScale(
             manual_frame,
             from_=0,
             to=100,
             orient=tk.HORIZONTAL,
-            command=self.on_cpu_scale_change,
         )
+        self.cpu_scale.bind("<ButtonRelease-1>", self.on_cpu_scale_release)
         self.cpu_scale.pack(fill="x")
 
         # 外设风扇控制
         tk.Label(manual_frame, text="外设风扇转速").pack()
-        self.peripheral_scale = tk.Scale(
+        self.peripheral_scale = CustomScale(
             manual_frame,
             from_=0,
             to=100,
             orient=tk.HORIZONTAL,
-            command=self.on_peripheral_scale_change,
+        )
+        self.peripheral_scale.bind(
+            "<ButtonRelease-1>", self.on_peripheral_scale_release
         )
         self.peripheral_scale.pack(fill="x")
+
+        # 添加警告标签
+        warning_label = tk.Label(
+            manual_frame,
+            text="注意：如果数值小于30%，BMC可能会自动重置风扇转速为全速",
+            fg="red",
+            wraplength=600,  # 文字自动换行宽度
+        )
+        warning_label.pack(pady=5)
+
+        # 添加重置按钮
+        tk.Button(
+            manual_frame, text="重置为自动控制", command=self.reset_fan_control
+        ).pack(pady=5)
 
         # 创建状态显示区域
         status_frame = tk.LabelFrame(root, text="状态信息", padx=10, pady=5)
@@ -127,6 +185,34 @@ class IPMIGui:
         )
         self.status_text.pack(fill="both", expand=True)
         scrollbar.config(command=self.status_text.yview)
+
+        # 添加作者信息框架
+        credits_frame = tk.Frame(root)
+        credits_frame.pack(fill="x", padx=10, pady=5)
+
+        # 按照从右到左的顺序添加元素
+        project_suffix = tk.Label(credits_frame, text=" opensource project")
+        project_suffix.pack(side=tk.RIGHT)
+
+        project_link = tk.Label(credits_frame, text="KCORES", fg="blue", cursor="hand2")
+        project_link.pack(side=tk.RIGHT)
+        project_link.bind(
+            "<Button-1>", lambda e: self.open_url("https://github.com/kcores")
+        )
+
+        project_label = tk.Label(credits_frame, text=" | This is a ")
+        project_label.pack(side=tk.RIGHT)
+
+        author_link = tk.Label(
+            credits_frame, text="karminski", fg="blue", cursor="hand2"
+        )
+        author_link.pack(side=tk.RIGHT)
+        author_link.bind(
+            "<Button-1>", lambda e: self.open_url("https://github.com/karminski")
+        )
+
+        author_label = tk.Label(credits_frame, text="Created by: ")
+        author_label.pack(side=tk.RIGHT)
 
     def execute_command(self, command):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -172,17 +258,28 @@ class IPMIGui:
         self.execute_command(f'"{self.ipmi_exe}" -raw 0x30 0x70 0x66 0x01 0x00 0x64')
         self.execute_command(f'"{self.ipmi_exe}" -raw 0x30 0x70 0x66 0x01 0x01 0x64')
 
-    def on_cpu_scale_change(self, value):
+    def on_cpu_scale_release(self, event):
+        value = self.cpu_scale.get()
         cpu_value = format(int(value), "x").zfill(2)
         self.execute_command(
             f'"{self.ipmi_exe}" -raw 0x30 0x70 0x66 0x01 0x00 0x{cpu_value}'
         )
 
-    def on_peripheral_scale_change(self, value):
+    def on_peripheral_scale_release(self, event):
+        value = self.peripheral_scale.get()
         peripheral_value = format(int(value), "x").zfill(2)
         self.execute_command(
             f'"{self.ipmi_exe}" -raw 0x30 0x70 0x66 0x01 0x01 0x{peripheral_value}'
         )
+
+    def reset_fan_control(self):
+        self.execute_command(f'"{self.ipmi_exe}" -raw 0x30 0x45 0x01 0x01')
+
+    # 添加打开URL的方法
+    def open_url(self, url):
+        import webbrowser
+
+        webbrowser.open(url)
 
 
 if __name__ == "__main__":
