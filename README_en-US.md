@@ -17,6 +17,12 @@ This project is a [KCORES opensource project](https://github.com/KCORES).
 - Provide a simple and easy-to-use GUI for controlling the fans of all motherboards which have IPMI interface.
 - Welcome to contribute to this project.
 
+## Build
+
+```bash
+make all
+```
+
 ## License
 
 This project is licensed under the [KCORES License](LICENSE_en-US).
