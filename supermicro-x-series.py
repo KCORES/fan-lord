@@ -5,6 +5,7 @@ import os
 import sys
 import ctypes
 from datetime import datetime
+import locale
 
 
 def is_admin():
@@ -17,7 +18,7 @@ def is_admin():
 def run_as_admin():
     try:
         if not is_admin():
-            # 重新以管理员权限启动程序
+            # Restart program with admin privileges
             ctypes.windll.shell32.ShellExecuteW(
                 None, "runas", sys.executable, " ".join(sys.argv), None, 1
             )
@@ -25,6 +26,39 @@ def run_as_admin():
     except Exception as e:
         messagebox.showerror("Error", f"Failed to get admin rights:\n{str(e)}")
         sys.exit(1)
+
+
+def get_resource_path(relative_path):
+    """Get absolute path to resource file"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        # If not packaged, use current folder
+        base_path = os.path.abspath(os.path.dirname(__file__))
+
+    return os.path.join(base_path, relative_path)
+
+
+def get_system_language():
+    """Get system language and match it with available languages"""
+    try:
+        system_lang = locale.getdefaultlocale()[0]
+
+        # Map system language codes to our available languages
+        lang_mapping = {
+            "zh": "中文",  # Chinese
+            "ja": "日本語",  # Japanese
+            "en": "English",  # English
+        }
+
+        # Get the first two letters of language code (e.g., 'zh_CN' -> 'zh')
+        system_lang_prefix = system_lang.split("_")[0].lower()
+
+        # Return matched language or default to English
+        return lang_mapping.get(system_lang_prefix, "English")
+    except:
+        return "English"
 
 
 class CustomScale(tk.Frame):
@@ -41,7 +75,7 @@ class CustomScale(tk.Frame):
     def update_background(self, *args):
         self.canvas.delete("all")
         width = self.canvas.winfo_width()
-        if width == 0:  # 窗口初始化时可能为0
+        if width == 0:  # Width may be 0 during window initialization
             self.canvas.after(10, self.update_background)
             return
 
@@ -50,13 +84,13 @@ class CustomScale(tk.Frame):
         threshold_x = width * (threshold / 100)
         current_x = width * (value / 100)
 
-        # 绘制灰色部分（0-30）
+        # Draw gray part (0-30)
         if threshold_x > 0:
             self.canvas.create_rectangle(
                 0, 0, min(threshold_x, current_x), 5, fill="#D3D3D3", outline=""
             )
 
-        # 绘制绿色部分（30-100）
+        # Draw green part (30-100)
         if current_x > threshold_x:
             self.canvas.create_rectangle(
                 threshold_x, 0, current_x, 5, fill="#90EE90", outline=""
@@ -73,7 +107,7 @@ class IPMIGui:
     def __init__(self, root):
         self.root = root
 
-        # 添加语言配置
+        # Add language configuration
         self.languages = {
             "中文": {
                 "window_title": "Fan Lord for Supermicro X-Series",
@@ -140,53 +174,55 @@ class IPMIGui:
             },
         }
 
-        self.current_language = "中文"
-        # 创建一个类变量来存储 StringVar
+        # Initialize language based on system settings
+        self.current_language = get_system_language()
+        # Create a class variable to store StringVar
         self.language_var = tk.StringVar(value=self.current_language)
 
-        # 创建菜单栏
+        # Create menu bar
         self.menubar = tk.Menu(root)
         self.root.config(menu=self.menubar)
 
-        # 创建语言菜单
+        # Create language menu
         self.language_menu = tk.Menu(self.menubar, tearoff=0)
         self.menubar.add_cascade(label="语言", menu=self.language_menu)
 
-        # 添加语言选项
+        # Add language options
         for lang in self.languages.keys():
             self.language_menu.add_radiobutton(
                 label=lang,
-                variable=self.language_var,  # 使用类变量
-                value=lang,  # 设置选项的值
+                variable=self.language_var,  # Use class variable
+                value=lang,  # Set option value
                 command=lambda l=lang: self.change_language(l),
             )
 
-        # 设置窗口图标
+        # Set window icon
         if getattr(sys, "frozen", False):
-            # 如果是打包后的可执行文件
+            # If running as packaged executable
             icon_path = os.path.join(sys._MEIPASS, "fan-lord.ico")
         else:
-            # 如果是直接运行的Python脚本
+            # If running as Python script
             icon_path = "fan-lord.ico"
 
         self.root.iconbitmap(icon_path)
 
-        # 获取可执行文件目录
+        # Get executable directory
         if getattr(sys, "frozen", False):
-            # 如果是打包后的可执行文件
+            # If running as packaged executable
             self.current_dir = os.path.dirname(sys.executable)
         else:
-            # 如果是直接运行的Python脚本
+            # If running as Python script
             self.current_dir = os.path.dirname(os.path.abspath(__file__))
 
-        self.ipmi_exe = os.path.join(self.current_dir, "IPMICFG-Win.exe")
+        # Modify this part
+        # Use get_resource_path to get IPMI tool path
+        self.ipmi_exe = get_resource_path("IPMICFG-Win.exe")
 
-        # 添加调试信息
-        print(f"Current directory: {self.current_dir}")
+        # Add debug info
         print(f"IPMI exe path: {self.ipmi_exe}")
         print(f"File exists: {os.path.exists(self.ipmi_exe)}")
 
-        # 检查IPMI工具是否存在
+        # Check if IPMI tool exists
         if not os.path.exists(self.ipmi_exe):
             messagebox.showerror(
                 "Error", f"IPMICFG-Win.exe not found at: {self.ipmi_exe}"
@@ -194,7 +230,7 @@ class IPMIGui:
             root.destroy()
             return
 
-        # 设置窗口大小和位置
+        # Set window size and position
         window_width = 800
         window_height = 600
         screen_width = root.winfo_screenwidth()
@@ -203,7 +239,7 @@ class IPMIGui:
         center_y = int(screen_height / 2 - window_height / 2)
         self.root.geometry(f"{window_width}x{window_height}+{center_x}+{center_y}")
 
-        # 创建模式选择框架
+        # Create mode selection frame
         mode_frame = tk.LabelFrame(root, text="预设模式", padx=10, pady=5)
         mode_frame.pack(fill="x", padx=10, pady=5)
 
@@ -217,11 +253,11 @@ class IPMIGui:
             side=tk.LEFT, padx=5
         )
 
-        # 创建手动控制框架
+        # Create manual control frame
         manual_frame = tk.LabelFrame(root, text="手动控制", padx=10, pady=5)
         manual_frame.pack(fill="x", padx=10, pady=5)
 
-        # CPU风扇控制
+        # CPU fan control
         tk.Label(manual_frame, text="CPU风扇转速").pack()
         self.cpu_scale = CustomScale(
             manual_frame,
@@ -232,7 +268,7 @@ class IPMIGui:
         self.cpu_scale.bind("<ButtonRelease-1>", self.on_cpu_scale_release)
         self.cpu_scale.pack(fill="x")
 
-        # 外设风扇控制
+        # Peripheral fan control
         tk.Label(manual_frame, text="外设风扇转速").pack()
         self.peripheral_scale = CustomScale(
             manual_frame,
@@ -245,25 +281,25 @@ class IPMIGui:
         )
         self.peripheral_scale.pack(fill="x")
 
-        # 添加警告标签
+        # Add warning label
         warning_label = tk.Label(
             manual_frame,
             text="注意：如果数值小于30%，BMC可能会自动重置风扇转速为全速",
             fg="red",
-            wraplength=600,  # 文字自动换行宽度
+            wraplength=600,  # Text auto wrap width
         )
         warning_label.pack(pady=5)
 
-        # 添加重置按钮
+        # Add reset button
         tk.Button(
             manual_frame, text="重置为自动控制", command=self.reset_fan_control
         ).pack(pady=5)
 
-        # 创建状态显示区域
+        # Create status display area
         status_frame = tk.LabelFrame(root, text="状态信息", padx=10, pady=5)
         status_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
-        # 添加滚动条
+        # Add scrollbar
         scrollbar = tk.Scrollbar(status_frame)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
 
@@ -273,11 +309,11 @@ class IPMIGui:
         self.status_text.pack(fill="both", expand=True)
         scrollbar.config(command=self.status_text.yview)
 
-        # 添加作者信息框架
+        # Add credits frame
         credits_frame = tk.Frame(root)
         credits_frame.pack(fill="x", padx=10, pady=5)
 
-        # 按照从右到左的顺序添加元素
+        # Add elements from right to left
         project_suffix = tk.Label(credits_frame, text=" opensource project")
         project_suffix.pack(side=tk.RIGHT)
 
@@ -301,23 +337,23 @@ class IPMIGui:
         author_label = tk.Label(credits_frame, text="Created by: ")
         author_label.pack(side=tk.RIGHT)
 
-        # 更新所有文本为当前语言
+        # Update all text to current language
         self.update_texts()
 
     def update_texts(self):
-        """更新界面上的所有文本为当前选择的语言"""
+        """Update all interface text to currently selected language"""
         lang = self.languages[self.current_language]
 
-        # 更新窗口标题
+        # Update window title
         self.root.title(lang["window_title"])
 
-        # 更新菜单栏文本
+        # Update menu bar text
         self.menubar.entryconfigure(1, label=lang["language_menu"])
 
-        # 更新各个框架和其中的组件
+        # Update frames and their components
         for widget in self.root.winfo_children():
             if isinstance(widget, tk.LabelFrame):
-                # 更新 LabelFrame 标题
+                # Update LabelFrame titles
                 if (
                     "预设模式" in widget.cget("text")
                     or "Preset" in widget.cget("text")
@@ -337,9 +373,9 @@ class IPMIGui:
                 ):
                     widget.configure(text=lang["status_info"])
 
-                # 更新框架内的组件
+                # Update components inside frames
                 for child in widget.winfo_children():
-                    # 更新按钮文本
+                    # Update button text
                     if isinstance(child, tk.Button):
                         if any(
                             x in child.cget("text")
@@ -362,7 +398,7 @@ class IPMIGui:
                         ):
                             child.configure(text=lang["reset_auto"])
 
-                    # 更新标签文本
+                    # Update label text
                     elif isinstance(child, tk.Label):
                         if any(
                             x in child.cget("text")
@@ -381,7 +417,7 @@ class IPMIGui:
                         ):
                             child.configure(text=lang["warning_text"])
 
-                    # 递归处理嵌套的组件
+                    # Recursively process nested components
                     if hasattr(child, "winfo_children"):
                         for grandchild in child.winfo_children():
                             if isinstance(grandchild, tk.Label):
@@ -403,7 +439,7 @@ class IPMIGui:
                                     )
 
     def change_language(self, new_language):
-        """切换界面语言"""
+        """Switch interface language"""
         self.current_language = new_language
         self.update_texts()
 
@@ -439,7 +475,7 @@ class IPMIGui:
 
         self.status_text.tag_config(tag, foreground=color)
         self.status_text.insert(tk.END, message, tag)
-        self.status_text.see(tk.END)  # 自动滚动到最新内容
+        self.status_text.see(tk.END)  # Auto scroll to latest content
         self.root.update()
 
     def silent_mode(self):
@@ -471,7 +507,7 @@ class IPMIGui:
     def reset_fan_control(self):
         self.execute_command(f'"{self.ipmi_exe}" -raw 0x30 0x45 0x01 0x01')
 
-    # 添加打开URL的方法
+    # Add method to open URL
     def open_url(self, url):
         import webbrowser
 
@@ -479,7 +515,7 @@ class IPMIGui:
 
 
 if __name__ == "__main__":
-    # 检查管理员权限
+    # Check admin privileges
     run_as_admin()
 
     root = tk.Tk()

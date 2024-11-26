@@ -5,11 +5,12 @@ block_cipher = None
 a = Analysis(
     ['supermicro-x-series.py'],
     pathex=[],
-    binaries=[],
+    binaries=[
+        ('IPMICFG-Win.exe', '.'),
+        ('pmdll.dll', '.')
+    ],
     datas=[
-        ('IPMICFG-Win.exe', '.'),  # 包含 IPMI 工具
-        ('pmdll.dll', '.'),        # 包含 DLL 依赖
-        ('fan-lord.ico', '.'),     # 添加图标文件
+        ('fan-lord.ico', '.')
     ],
     hiddenimports=[],
     hookspath=[],
@@ -43,5 +44,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='fan-lord.ico',  # 如果你有图标的话
+    icon='fan-lord.ico'
 )
