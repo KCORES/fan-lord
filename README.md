@@ -29,6 +29,14 @@ make all
 
 本项目采用 [KCORES 许可证](LICENSE_en-US) 授权。
 
+项目中依赖的 IPMI 二进制程序和动态链接库来自 Supermicro IPMI Utilities，Supermicro 保有其版权。
+
+## 关于安全性
+
+本项目并没有购买证书用于代码签名, 所以运行时需要手动允许 SmartScreen 放行该项目。
+
+基于安全性的考虑, 建议您尝试自己构建这个项目。
+
 ## 作者
 
 - [karminski](https://github.com/karminski)

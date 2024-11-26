@@ -30,6 +30,14 @@ make all
 
 This project is licensed under the [KCORES License](LICENSE_en-US).
 
+The IPMI binary program and dynamic library used in this project are from Supermicro IPMI Utilities, and Supermicro owns the copyright.
+
+## About Security
+
+This project does not have a purchased certificate for code signing, so you need to manually allow SmartScreen to run this project.
+
+For security considerations, it is recommended that you try to build this project yourself.
+
 ## Author
 
 - [karminski](https://github.com/karminski)
