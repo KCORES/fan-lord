@@ -7,6 +7,9 @@ import ctypes
 from datetime import datetime
 import locale
 
+# 在文件顶部添加版本常量
+VERSION = "v0.1.1"
+
 
 def is_admin():
     try:
@@ -313,7 +316,15 @@ class IPMIGui:
         credits_frame = tk.Frame(root)
         credits_frame.pack(fill="x", padx=10, pady=5)
 
-        # Add elements from right to left
+        # Add version label with link (修改)
+        version_label = tk.Label(
+            credits_frame, text=f"{VERSION}", fg="blue", cursor="hand2"
+        )
+        version_label.pack(side=tk.RIGHT)
+        version_label.bind(
+            "<Button-1>", lambda e: self.open_url("https://github.com/KCORES/fan-lord")
+        )
+
         project_suffix = tk.Label(credits_frame, text=" opensource project")
         project_suffix.pack(side=tk.RIGHT)
 
