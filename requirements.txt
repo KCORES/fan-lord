@@ -1,3 +1,2 @@
-tkinter
 pyinstaller>=6.0.0
 pywin32>=223 

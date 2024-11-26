@@ -8,7 +8,7 @@ from datetime import datetime
 import locale
 
 # 在文件顶部添加版本常量
-VERSION = "v0.1.1"
+VERSION = "v0.1.2"
 
 
 def is_admin():

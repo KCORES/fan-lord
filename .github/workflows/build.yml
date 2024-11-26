@@ -34,3 +34,8 @@ jobs:
           dist/*.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+  actions-timeline:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: Kesin11/actions-timeline@v2
