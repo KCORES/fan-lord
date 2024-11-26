@@ -90,6 +90,11 @@ class IPMIGui:
                 "created_by": "Created by: ",
                 "this_is_a": " | This is a ",
                 "project": " opensource project",
+                "language_menu": "语言",
+                "execute_command": "执行命令",
+                "command_success": "命令执行成功！",
+                "command_failed": "命令执行失败：",
+                "command_error": "执行命令时出错：",
             },
             "English": {
                 "window_title": "Fan Lord for Supermicro X-Series",
@@ -106,6 +111,11 @@ class IPMIGui:
                 "created_by": "Created by: ",
                 "this_is_a": " | This is a ",
                 "project": " opensource project",
+                "language_menu": "Language",
+                "execute_command": "Execute command",
+                "command_success": "Command executed successfully!",
+                "command_failed": "Command execution failed:",
+                "command_error": "Error executing command:",
             },
             "日本語": {
                 "window_title": "Fan Lord for Supermicro X-Series",
@@ -122,6 +132,11 @@ class IPMIGui:
                 "created_by": "作成者: ",
                 "this_is_a": " | これは ",
                 "project": " オープンソースプロジェクトです",
+                "language_menu": "言語",
+                "execute_command": "コマンドを実行",
+                "command_success": "コマンドが正常に実行されました！",
+                "command_failed": "コマンドの実行に失敗しました：",
+                "command_error": "コマンドの実行中にエラーが発生しました：",
             },
         }
 
@@ -296,6 +311,9 @@ class IPMIGui:
         # 更新窗口标题
         self.root.title(lang["window_title"])
 
+        # 更新菜单栏文本
+        self.menubar.entryconfigure(1, label=lang["language_menu"])
+
         # 更新各个框架和其中的组件
         for widget in self.root.winfo_children():
             if isinstance(widget, tk.LabelFrame):
@@ -391,20 +409,23 @@ class IPMIGui:
 
     def execute_command(self, command):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        lang = self.languages[self.current_language]
+
         try:
             result = subprocess.run(command, shell=True, capture_output=True, text=True)
             if result.returncode == 0:
                 self.update_status(
-                    f"[{current_time}] 执行命令: {command} 命令执行成功！\n", "success"
+                    f"[{current_time}] {lang['execute_command']}: {command} {lang['command_success']}\n",
+                    "success",
                 )
             else:
                 self.update_status(
-                    f"[{current_time}] 执行命令: {command} 命令执行失败：\n{result.stderr}\n",
+                    f"[{current_time}] {lang['execute_command']}: {command} {lang['command_failed']}\n{result.stderr}\n",
                     "error",
                 )
         except Exception as e:
             self.update_status(
-                f"[{current_time}] 执行命令: {command} 执行命令时出错：\n{str(e)}\n",
+                f"[{current_time}] {lang['execute_command']}: {command} {lang['command_error']}\n{str(e)}\n",
                 "error",
             )
 

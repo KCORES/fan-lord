@@ -3,6 +3,9 @@ Fan Lord
 
 [README in Chinese](README.md)
 
+![Fan Lord Screenshot](fan-lord-screenshot-en-US.png)
+
+
 A GUI tool for controlling the fans of Supermicro X-Series servers.
 
 This project is a [KCORES opensource project](https://github.com/KCORES).

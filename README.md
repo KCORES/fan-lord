@@ -3,6 +3,8 @@ Fan Lord
 
 [README in English](README_en-US.md)
 
+![Fan Lord Screenshot](fan-lord-screenshot.png)
+
 一个用于控制 Supermicro X 系列主板风扇的图形界面工具。
 
 本项目是一个 [KCORES 开源项目](https://github.com/KCORES)。
