@@ -72,7 +72,79 @@ class CustomScale(tk.Frame):
 class IPMIGui:
     def __init__(self, root):
         self.root = root
-        self.root.title("Fan Lord for Supermicro X-Series")
+
+        # 添加语言配置
+        self.languages = {
+            "中文": {
+                "window_title": "Fan Lord for Supermicro X-Series",
+                "preset_modes": "预设模式",
+                "silent_mode": "静音模式",
+                "performance_mode": "性能模式",
+                "full_speed_mode": "全速模式",
+                "manual_control": "手动控制",
+                "cpu_fan_speed": "CPU风扇转速",
+                "peripheral_fan_speed": "外设风扇转速",
+                "warning_text": "注意：如果数值小于30%，BMC可能会自动重置风扇转速为全速",
+                "reset_auto": "重置为自动控制",
+                "status_info": "状态信息",
+                "created_by": "Created by: ",
+                "this_is_a": " | This is a ",
+                "project": " opensource project",
+            },
+            "English": {
+                "window_title": "Fan Lord for Supermicro X-Series",
+                "preset_modes": "Preset Modes",
+                "silent_mode": "Silent Mode",
+                "performance_mode": "Performance Mode",
+                "full_speed_mode": "Full Speed Mode",
+                "manual_control": "Manual Control",
+                "cpu_fan_speed": "CPU Fan Speed",
+                "peripheral_fan_speed": "Peripheral Fan Speed",
+                "warning_text": "Note: If the value is less than 30%, BMC may automatically reset fan speed to full speed",
+                "reset_auto": "Reset to Auto Control",
+                "status_info": "Status Information",
+                "created_by": "Created by: ",
+                "this_is_a": " | This is a ",
+                "project": " opensource project",
+            },
+            "日本語": {
+                "window_title": "Fan Lord for Supermicro X-Series",
+                "preset_modes": "プリセットモード",
+                "silent_mode": "サイレントモード",
+                "performance_mode": "パフォーマンスモード",
+                "full_speed_mode": "フルスピードモード",
+                "manual_control": "手動制御",
+                "cpu_fan_speed": "CPUファン速度",
+                "peripheral_fan_speed": "周辺機器ファン速度",
+                "warning_text": "注意：値が30%未満の場合、BMCが自動的にファン速度をフルスピードにリセットする可能性があります",
+                "reset_auto": "自動制御にリセット",
+                "status_info": "ステータス情報",
+                "created_by": "作成者: ",
+                "this_is_a": " | これは ",
+                "project": " オープンソースプロジェクトです",
+            },
+        }
+
+        self.current_language = "中文"
+        # 创建一个类变量来存储 StringVar
+        self.language_var = tk.StringVar(value=self.current_language)
+
+        # 创建菜单栏
+        self.menubar = tk.Menu(root)
+        self.root.config(menu=self.menubar)
+
+        # 创建语言菜单
+        self.language_menu = tk.Menu(self.menubar, tearoff=0)
+        self.menubar.add_cascade(label="语言", menu=self.language_menu)
+
+        # 添加语言选项
+        for lang in self.languages.keys():
+            self.language_menu.add_radiobutton(
+                label=lang,
+                variable=self.language_var,  # 使用类变量
+                value=lang,  # 设置选项的值
+                command=lambda l=lang: self.change_language(l),
+            )
 
         # 设置窗口图标
         if getattr(sys, "frozen", False):
@@ -213,6 +285,109 @@ class IPMIGui:
 
         author_label = tk.Label(credits_frame, text="Created by: ")
         author_label.pack(side=tk.RIGHT)
+
+        # 更新所有文本为当前语言
+        self.update_texts()
+
+    def update_texts(self):
+        """更新界面上的所有文本为当前选择的语言"""
+        lang = self.languages[self.current_language]
+
+        # 更新窗口标题
+        self.root.title(lang["window_title"])
+
+        # 更新各个框架和其中的组件
+        for widget in self.root.winfo_children():
+            if isinstance(widget, tk.LabelFrame):
+                # 更新 LabelFrame 标题
+                if (
+                    "预设模式" in widget.cget("text")
+                    or "Preset" in widget.cget("text")
+                    or "プリセット" in widget.cget("text")
+                ):
+                    widget.configure(text=lang["preset_modes"])
+                elif (
+                    "手动控制" in widget.cget("text")
+                    or "Manual" in widget.cget("text")
+                    or "手動" in widget.cget("text")
+                ):
+                    widget.configure(text=lang["manual_control"])
+                elif (
+                    "状态信息" in widget.cget("text")
+                    or "Status" in widget.cget("text")
+                    or "ステータス" in widget.cget("text")
+                ):
+                    widget.configure(text=lang["status_info"])
+
+                # 更新框架内的组件
+                for child in widget.winfo_children():
+                    # 更新按钮文本
+                    if isinstance(child, tk.Button):
+                        if any(
+                            x in child.cget("text")
+                            for x in ["静音模式", "Silent", "サイレント"]
+                        ):
+                            child.configure(text=lang["silent_mode"])
+                        elif any(
+                            x in child.cget("text")
+                            for x in ["性能模式", "Performance", "パフォーマンス"]
+                        ):
+                            child.configure(text=lang["performance_mode"])
+                        elif any(
+                            x in child.cget("text")
+                            for x in ["全速模式", "Full Speed", "フルスピード"]
+                        ):
+                            child.configure(text=lang["full_speed_mode"])
+                        elif any(
+                            x in child.cget("text")
+                            for x in ["重置为自动控制", "Reset", "自動制御"]
+                        ):
+                            child.configure(text=lang["reset_auto"])
+
+                    # 更新标签文本
+                    elif isinstance(child, tk.Label):
+                        if any(
+                            x in child.cget("text")
+                            for x in ["CPU风扇转速", "CPU Fan", "CPUファン"]
+                        ):
+                            child.configure(text=lang["cpu_fan_speed"])
+                        elif any(
+                            x in child.cget("text")
+                            for x in ["外设风扇转速", "Peripheral Fan", "周辺機器"]
+                        ):
+                            child.configure(text=lang["peripheral_fan_speed"])
+                        elif (
+                            "注意" in child.cget("text")
+                            or "Note" in child.cget("text")
+                            or "注意" in child.cget("text")
+                        ):
+                            child.configure(text=lang["warning_text"])
+
+                    # 递归处理嵌套的组件
+                    if hasattr(child, "winfo_children"):
+                        for grandchild in child.winfo_children():
+                            if isinstance(grandchild, tk.Label):
+                                if any(
+                                    x in grandchild.cget("text")
+                                    for x in ["CPU风扇转速", "CPU Fan", "CPUファン"]
+                                ):
+                                    grandchild.configure(text=lang["cpu_fan_speed"])
+                                elif any(
+                                    x in grandchild.cget("text")
+                                    for x in [
+                                        "外设风扇转速",
+                                        "Peripheral Fan",
+                                        "周辺機器",
+                                    ]
+                                ):
+                                    grandchild.configure(
+                                        text=lang["peripheral_fan_speed"]
+                                    )
+
+    def change_language(self, new_language):
+        """切换界面语言"""
+        self.current_language = new_language
+        self.update_texts()
 
     def execute_command(self, command):
         current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
