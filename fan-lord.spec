@@ -3,14 +3,13 @@
 block_cipher = None
 
 a = Analysis(
-    ['supermicro-x-series.py'],
+    ['main.py'],
     pathex=[],
-    binaries=[
-        ('IPMICFG-Win.exe', '.'),
-        ('pmdll.dll', '.')
-    ],
+    binaries=[],
     datas=[
-        ('fan-lord.ico', '.')
+        ('IPMICFG-Win.exe', '.'),  # 包含 IPMI 工具
+        ('pmdll.dll', '.'),        # 包含依赖 DLL
+        ('fan-lord.ico', '.')      # 包含图标文件（如果有的话）
     ],
     hiddenimports=[],
     hookspath=[],
@@ -32,17 +31,18 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name='FanLord',
+    name='Fan-Lord',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,
+    console=False,  # 设置为 False 以隐藏控制台窗口
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='fan-lord.ico'
+    icon='fan-lord.ico',  # 设置程序图标
+    version='file_version_info.txt',  # 版本信息文件
 )
